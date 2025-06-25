@@ -135,6 +135,11 @@ def oauth2callback():
 
     return "Google認証が完了しました！LINEで通知が届きます。"
 
+# === ルート（/）にアクセスしたときの表示 ===
+@app.route('/')
+def home():
+    return 'Merutsuuchi は正常に動作中です！'
+
 # === メイン実行 ===
 if __name__ == "__main__":
     app.run(debug=True)
