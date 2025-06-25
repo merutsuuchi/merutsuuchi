@@ -10,12 +10,11 @@ from linebot.models import MessageEvent, TextMessage, TextSendMessage
 app = Flask(__name__)
 
 # ① LINE Bot設定（↓ここを自分の情報に変更）
-LINE_CHANNEL_ACCESS_TOKEN = 'dummy_token'
-LINE_CHANNEL_SECRET = 'dummy_secret'
-
-CLIENT_ID = 'dummy_client_id'
-CLIENT_SECRET = 'dummy_client_secret'
-REDIRECT_URI = 'https://example.com/callback'
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET")
+CLIENT_ID = os.environ.get("CLIENT_ID")
+CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
+REDIRECT_URI = os.environ.get("REDIRECT_URI")
 
 USERS_FILE = "users.json"
 
