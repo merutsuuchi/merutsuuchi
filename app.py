@@ -16,7 +16,7 @@ CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 REDIRECT_URI = os.environ.get("REDIRECT_URI")
 
-USERS_FILE = "users.json"
+USERS_FILE = "/persistent/users.json"
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
@@ -45,15 +45,19 @@ def find_user_by_state(state):
             return user
     return None
 
-def update_user_tokens(state, access_token, refresh_token, token_expiry):
+def update_user_tokens(state, access_token, refresh_token, token_expiry, email_address):
     users = load_users()
     for user in users:
         if user.get("state") == state:
             user["access_token"] = access_token
             user["refresh_token"] = refresh_token
             user["token_expiry"] = token_expiry
+            user["EMAIL_ADDRESS"] = email_address
+            user["IMAP_SERVER"] = "imap.gmail.com"
+            user["IMAP_PORT"] = 993
             break
     save_users(users)
+
 
 # === LINE Webhook ===
 @app.route("/line-callback", methods=["POST"])
@@ -92,7 +96,7 @@ def handle_message(event):
         f"?client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
         f"&response_type=code"
-        f"&scope=https://mail.google.com/"
+        f"&scope=https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email"
         f"&access_type=offline"
         f"&prompt=consent"
         f"&state={state}"
@@ -130,9 +134,22 @@ def oauth2callback():
 
     expiry_time = (datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)).isoformat()
 
-    update_user_tokens(state, access_token, refresh_token, expiry_time)
+    # ユーザー情報取得
+    userinfo_response = requests.get(
+        "https://www.googleapis.com/oauth2/v2/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"}
+    )
+    userinfo = userinfo_response.json()
+    email_address = userinfo.get("email")
+
+    if not email_address:
+        return "メールアドレスの取得に失敗しました。"
+
+    # ユーザー情報更新
+    update_user_tokens(state, access_token, refresh_token, expiry_time, email_address)
 
     return "Google認証が完了しました！LINEで通知が届きます。"
+
 
 # === ルート（/）にアクセスしたときの表示 ===
 @app.route('/')
