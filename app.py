@@ -17,8 +17,8 @@ LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET")
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 REDIRECT_URI = os.environ.get("REDIRECT_URI")
-USERS_FILE = "/persistent/users.json"
-COUNT_FILE = "/persistent/notify_counts.json"
+USERS_FILE = "./persistent/users.json"
+COUNT_FILE = "./persistent/notify_counts.json"
 NOTIFY_LIMIT = 30
 
 app = Flask(__name__)
