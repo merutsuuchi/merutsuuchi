@@ -214,9 +214,13 @@ def update_user_tokens(state, access_token, refresh_token, token_expiry, email_a
 # === LINE Webhook ===
 @app.route("/line-callback", methods=["POST"])
 def callback():
-    signature = request.headers["X-Line-Signature"]
+    signature = request.headers.get("X-Line-Signature")
     body = request.get_data(as_text=True)
-    handler.handle(body, signature)
+    try:
+        handler.handle(body, signature)
+    except Exception as e:
+        print(f"LINE callback error: {e}")
+        return "Error", 500
     return "OK"
 
 def main():
