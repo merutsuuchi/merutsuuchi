@@ -319,26 +319,12 @@ def oauth2callback():
 def home():
     return 'Merutsuuchi は正常に動作中です！'
 
-# === メイン実行 ===
-if __name__ == "__main__":
-    # === /persistent 書き込み確認テスト ===
-    try:
-        persistent_dir = os.path.dirname(USERS_FILE)
-        if not os.path.exists(persistent_dir):
-            os.makedirs(persistent_dir, exist_ok=True)
-    
-        test_file = os.path.join(persistent_dir, "test_write.txt")
-        with open(test_file, "w") as f:
-            f.write("Write test OK\n")
-        print(f"✅ /persistent 書き込み成功: {test_file}")
-    except Exception as e:
-        print(f"❌ /persistent 書き込み失敗: {e}")
-
-    persistent_dir = os.path.dirname(USERS_FILE)
-    if not os.path.exists(persistent_dir):
-        os.makedirs(persistent_dir, exist_ok=True)
-        
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(main, 'interval', minutes=1)  # 10分ごとにメールチェック
-    scheduler.start()
-    app.run(debug=False)
+def main():
+    print("===== main() started =====")
+    users = load_users()
+    counts = load_notify_counts()
+    for user in users:
+        try:
+            check_email(user, users, counts)
+        except Exception as e:
+            print(f"[{user.get('LINE_USER_ID', '不明')}] ❌ check_emailで例外発生: {e}")
