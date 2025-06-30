@@ -310,6 +310,6 @@ def home():
 # === メイン実行 ===
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
-    scheduler.add_job(main, 'interval', minutes=10)  # 10分ごとにメールチェック
+    scheduler.add_job(main, 'interval', minutes=1)  # 10分ごとにメールチェック
     scheduler.start()
     app.run(debug=False)
