@@ -73,8 +73,12 @@ def load_notify_counts():
         return {}
 
 def save_notify_counts(counts):
-    with open(COUNT_FILE, "w") as f:
-        json.dump(counts, f, indent=2, ensure_ascii=False)
+    directory = os.path.dirname(COUNT_FILE)  
+    if not os.path.exists(directory):        
+        os.makedirs(directory, exist_ok=True) 
+    with open(COUNT_FILE, "w") as f:         
+        json.dump(counts, f, indent=2, ensure_ascii=False)  
+
 
 def check_email(user, users, counts):
     if not is_user_ready(user):
@@ -172,8 +176,12 @@ def load_users():
     return []
 
 def save_users(users):
-    with open(USERS_FILE, 'w') as f:
-        json.dump(users, f, indent=2)
+    directory = os.path.dirname(USERS_FILE) 
+    if not os.path.exists(directory):      
+        os.makedirs(directory, exist_ok=True)  
+    with open(USERS_FILE, 'w') as f:       
+        json.dump(users, f, indent=2)       
+
 
 def find_user_by_line_id(line_user_id):
     users = load_users()
@@ -309,6 +317,10 @@ def home():
 
 # === メイン実行 ===
 if __name__ == "__main__":
+    persistent_dir = os.path.dirname(USERS_FILE)
+    if not os.path.exists(persistent_dir):
+        os.makedirs(persistent_dir, exist_ok=True)
+        
     scheduler = BackgroundScheduler()
     scheduler.add_job(main, 'interval', minutes=1)  # 10分ごとにメールチェック
     scheduler.start()
