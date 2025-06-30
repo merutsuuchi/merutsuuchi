@@ -313,6 +313,11 @@ def oauth2callback():
 
     return "Google認証が完了しました！LINEで通知が届きます。"
 
+@app.route('/test-main')
+def test_main():
+    print("===== /test-main accessed, main() will run =====")
+    main()
+    return "main() executed"
 
 # === ルート（/）にアクセスしたときの表示 ===
 @app.route('/')
