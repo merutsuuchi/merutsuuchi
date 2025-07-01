@@ -326,21 +326,22 @@ def home():
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-if __name__ == "__main__":
-    print("🟡 Starting main() before scheduler")
+print("🟡 Starting main() before scheduler")
+main()
+print("🟡 main() done, initializing scheduler")
+
+scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
+
+@scheduler.scheduled_job('interval', minutes=1)
+def scheduled_job():
+    print("🟢 Scheduled job started")
     main()
-    print("🟡 main() done, initializing scheduler")
+    print("🟢 Scheduled job finished")
 
-    scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
+print("🟡 Starting scheduler")
+scheduler.start()
+print("🟡 Scheduler started")
 
-    @scheduler.scheduled_job('interval', minutes=1)
-    def scheduled_job():
-        print("🟢 Scheduled job started")
-        main()
-        print("🟢 Scheduled job finished")
-
-    print("🟡 Starting scheduler")
-    scheduler.start()
-    print("🟡 Scheduler started")
-
+# そして最後のほうに
+if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
