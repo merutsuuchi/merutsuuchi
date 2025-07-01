@@ -326,14 +326,7 @@ def home():
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-def main():
-    print("✅ main() executed")
+if __name__ == "__main__":
+    main()  # ← コンテナ起動直後に1度だけ確実に実行
 
-scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
-
-@scheduler.scheduled_job('interval', minutes=1)
-def scheduled_job():
-    print("✅ Scheduled job executed")
-    main()
-
-scheduler.start()
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
