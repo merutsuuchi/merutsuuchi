@@ -324,8 +324,16 @@ def test_main():
 def home():
     return 'Merutsuuchi は正常に動作中です！'
 
-if __name__ == "__main__":
-    scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
-    scheduler.add_job(main, 'interval', minutes=1)
-    scheduler.start()
-    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
+from apscheduler.schedulers.background import BackgroundScheduler
+
+def main():
+    print("✅ main() executed")
+
+scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
+
+@scheduler.scheduled_job('interval', minutes=1)
+def scheduled_job():
+    print("✅ Scheduled job executed")
+    main()
+
+scheduler.start()
