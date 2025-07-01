@@ -332,7 +332,7 @@ print("🟡 main() done, initializing scheduler")
 
 scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
 
-@scheduler.scheduled_job('interval', minutes=1)
+@scheduler.scheduled_job('interval', minutes=100)
 def scheduled_job():
     print("🟢 Scheduled job started")
     main()
