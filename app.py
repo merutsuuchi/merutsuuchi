@@ -324,12 +324,8 @@ def test_main():
 def home():
     return 'Merutsuuchi は正常に動作中です！'
 
-def main():
-    print("===== main() started =====")
-    users = load_users()
-    counts = load_notify_counts()
-    for user in users:
-        try:
-            check_email(user, users, counts)
-        except Exception as e:
-            print(f"[{user.get('LINE_USER_ID', '不明')}] ❌ check_emailで例外発生: {e}")
+if __name__ == "__main__":
+    scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
+    scheduler.add_job(main, 'interval', minutes=1)
+    scheduler.start()
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
