@@ -154,18 +154,24 @@ def check_email(user, users, counts):
     counts[line_user_id] = notify_count
     save_notify_counts(counts)
 
-    tail_text = (
-        f"\n-----\n"
-        f"【通知回数】{notify_count}/{NOTIFY_LIMIT}回\n"
-        "通知の継続をご希望の場合は、LINEで「メル通知」までご連絡ください。\n"
-        "将来的にはプレミアムプランの導入も検討中です。\n\n"
-        "▼ご支援はこちら（PayPay）\n"
-        "https://qr.paypay.ne.jp/p2p01_NiHbdLbDfyqQRRa0"
+    message = (
+        "📩 新着メール通知\n\n"
+        + "\n".join([f"👤 {line.split(' / ')[0]}\n📝 {line.split(' / ')[1]}" for line in subjects])
+        + (f"\n\n他 {others} 件の未読メールあり" if others > 0 else "")
+        + "\n\n-----\n\n"
+        + f"✅ 通知回数：{notify_count}/{NOTIFY_LIMIT}回\n\n"
+        + "通知上限に達した場合は、\n"
+        + "X（旧Twitter）のDMでご連絡ください。\n"
+        + "👉 https://x.com/job_akira\n\n"
+        + "※今後プレミアムプラン（通知回数無制限）も予定しています。\n\n"
+        + "-----\n\n"
+        + "🙏 メル通知の運営は皆様の支援で成り立っています。\n"
+        + "もし応援いただける場合はこちらからお願いします。\n\n"
+        + "👉 https://qr.paypay.ne.jp/p2p01_NiHbdLbDfyqQRRa0"
     )
-
-    message = f"📩 新着メール一覧:\n\n{subject_text}{tail_text}"
+    
     line_bot_api.push_message(line_user_id, TextSendMessage(text=message))
-    print(f"[{line_user_id}] メール通知＋PayPay支援文送信完了")
+    print(f"[{line_user_id}] メール通知送信完了")
 
     mail.logout()
 
@@ -235,40 +241,72 @@ def handle_message(event):
     line_user_id = event.source.user_id
     user = find_user_by_line_id(line_user_id)
 
-    if not user:
-        # 新規ユーザーなら state を生成して保存
-        state = str(uuid.uuid4())
-        users = load_users()
-        users.append({
-            "LINE_USER_ID": line_user_id,
-            "state": state,
-            "EMAIL_ADDRESS": "",
-            "IMAP_SERVER": "",
-            "IMAP_PORT": "",
-            "access_token": "",
-            "refresh_token": "",
-            "token_expiry": ""
-        })
-        save_users(users)
-    else:
+    # === 【分岐①】ユーザー未登録（初回接触） ===
+if not user:
+    state = str(uuid.uuid4())
+    users = load_users()
+    users.append({
+        "LINE_USER_ID": line_user_id,
+        "state": state,
+        "EMAIL_ADDRESS": "",
+        "IMAP_SERVER": "",
+        "IMAP_PORT": "",
+        "access_token": "",
+        "refresh_token": "",
+        "token_expiry": ""
+    })
+    save_users(users)
+
+    # 修正後メッセージ：謝罪＋認証開始促し＋DM誘導
+    message = (
+        "✅ はじめまして！『メル通知』運営です。\n\n"
+        "ご案内が不十分で申し訳ありません。\n"
+        "このLINEでGmailの新着メールを自動で通知できます。\n\n"
+        "まずは認証を始めましょう。\n"
+        "「登録」とメッセージを送ってください。\n"
+        "送られてくるURLを開き、通知したいGmailアカウントでログインしてください。\n\n"
+        "わからない場合はX（旧Twitter）のDMでお気軽にお問い合わせください。\n"
+        "👉 https://x.com/job_akira"
+    )
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+    return  # 初回はここで終了
+
+
+    # === 【分岐②】認証状態チェック ===
+    is_authenticated = user.get("EMAIL_ADDRESS") and user.get("access_token")
+
+    if not is_authenticated:
+        # 未認証 → 認証URLを案内
         state = user["state"]
+        auth_url = (
+            f"https://accounts.google.com/o/oauth2/v2/auth"
+            f"?client_id={CLIENT_ID}"
+            f"&redirect_uri={REDIRECT_URI}"
+            f"&response_type=code"
+            f"&scope=https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email"
+            f"&access_type=offline"
+            f"&prompt=consent"
+            f"&state={state}"
+        )
+        message = (
+            "🔑 【Google認証のお願い】\n\n"
+            "下記URLから認証し、受信したいGmailアカウントでログインしてください。\n\n"
+            f"{auth_url}\n\n"
+            "不明点があればX（旧Twitter）のDMでお問い合わせください。\n"
+            "👉 https://x.com/job_akira"
+        )
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        return
 
-    # 認証URLを返信
-    auth_url = (
-        f"https://accounts.google.com/o/oauth2/v2/auth"
-        f"?client_id={CLIENT_ID}"
-        f"&redirect_uri={REDIRECT_URI}"
-        f"&response_type=code"
-        f"&scope=https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email"
-        f"&access_type=offline"
-        f"&prompt=consent"
-        f"&state={state}"
+    # === 【分岐③】認証済ユーザー → 登録完了済案内 ===
+    message = (
+        "✅ Google認証は完了しています。\n"
+        "あとはGmailに新着があると自動でLINE通知が届きます！\n\n"
+        "不明点があればX（旧Twitter）のDMまでご連絡ください。\n"
+        "👉 https://x.com/job_akira"
     )
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
 
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=f"Google認証をお願いします：\n{auth_url}")
-    )
 
 # === Google OAuth コールバック ===
 @app.route('/callback')
