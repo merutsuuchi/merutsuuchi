@@ -242,41 +242,38 @@ def handle_message(event):
     user = find_user_by_line_id(line_user_id)
 
     # === 【分岐①】ユーザー未登録（初回接触） ===
-if not user:
-    state = str(uuid.uuid4())
-    users = load_users()
-    users.append({
-        "LINE_USER_ID": line_user_id,
-        "state": state,
-        "EMAIL_ADDRESS": "",
-        "IMAP_SERVER": "",
-        "IMAP_PORT": "",
-        "access_token": "",
-        "refresh_token": "",
-        "token_expiry": ""
-    })
-    save_users(users)
+    if not user:
+        state = str(uuid.uuid4())
+        users = load_users()
+        users.append({
+            "LINE_USER_ID": line_user_id,
+            "state": state,
+            "EMAIL_ADDRESS": "",
+            "IMAP_SERVER": "",
+            "IMAP_PORT": "",
+            "access_token": "",
+            "refresh_token": "",
+            "token_expiry": ""
+        })
+        save_users(users)
 
-    # 修正後メッセージ：謝罪＋認証開始促し＋DM誘導
-    message = (
-        "✅ はじめまして！『メル通知』運営です。\n\n"
-        "ご案内が不十分で申し訳ありません。\n"
-        "このLINEでGmailの新着メールを自動で通知できます。\n\n"
-        "まずは認証を始めましょう。\n"
-        "「登録」とメッセージを送ってください。\n"
-        "送られてくるURLを開き、通知したいGmailアカウントでログインしてください。\n\n"
-        "わからない場合はX（旧Twitter）のDMでお気軽にお問い合わせください。\n"
-        "👉 https://x.com/job_akira"
-    )
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
-    return  # 初回はここで終了
-
+        message = (
+            "✅ はじめまして！『メル通知』運営です。\n\n"
+            "ご案内が不十分で申し訳ありません。\n"
+            "このLINEでGmailの新着メールを自動で通知できます。\n\n"
+            "まずは認証を始めましょう。\n"
+            "「登録」とメッセージを送ってください。\n"
+            "送られてくるURLを開き、通知したいGmailアカウントでログインしてください。\n\n"
+            "わからない場合はX（旧Twitter）のDMでお気軽にお問い合わせください。\n"
+            "👉 https://x.com/job_akira"
+        )
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message))
+        return  # 初回はここで終了
 
     # === 【分岐②】認証状態チェック ===
     is_authenticated = user.get("EMAIL_ADDRESS") and user.get("access_token")
 
     if not is_authenticated:
-        # 未認証 → 認証URLを案内
         state = user["state"]
         auth_url = (
             f"https://accounts.google.com/o/oauth2/v2/auth"
